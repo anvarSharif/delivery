@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Archived Orders - Table View</title>
+  <style>
+    /* Umumiy reset va asosiy stil */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f4f4f9;
+      color: #333;
+    }
+    /* Header */
+    .header {
+      width: 100%;
+      background-color: #4CAF50;
+      color: white;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 20px 40px;
+      border-radius: 0 0 8px 8px;
+      margin-bottom: 30px;
+    }
+    .header .links a {
+      color: white;
+      text-decoration: none;
+      margin-right: 20px;
+      font-size: 18px;
+    }
+    .header .user-info {
+      display: flex;
+      align-items: center;
+    }
+    .header .user-info img {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      margin-right: 10px;
+    }
+    /* Container */
+    .container {
+      padding: 0 40px;
+    }
+    h2 {
+      margin-bottom: 20px;
+    }
+    /* Jadval stilizatsiyasi */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background-color: #fff;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    thead {
+      background-color: #4CAF50;
+      color: white;
+    }
+    th, td {
+      padding: 12px 15px;
+      text-align: left;
+      border-bottom: 1px solid #ddd;
+    }
+    th.sortable {
+      cursor: pointer;
+    }
+    tbody tr:hover {
+      background-color: #f9f9f9;
+    }
+    .action-btn {
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      padding: 6px 12px;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    .action-btn:hover {
+      background-color: #45a049;
+    }
+    /* Modal styles */
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0,0,0,0.5);
+      justify-content: center;
+      align-items: center;
+    }
+    .modal-content {
+      background-color: #fff;
+      padding: 20px;
+      border-radius: 8px;
+      width: 400px;
+      position: relative;
+      box-shadow: 0 0 15px rgba(0,0,0,0.2);
+    }
+    .close-btn {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      font-size: 20px;
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: #555;
+    }
+    .close-btn:hover {
+      color: #ff0000;
+    }
+    .detail-item {
+      margin-bottom: 10px;
+      font-size: 14px;
+    }
+  </style>
+</head>
+<body>
+<!-- Header -->
+<div class="header">
+  <div class="links">
+    <a href="#">Admin Page</a>
+    <a href="#">Orders</a>
+    <a href="#">Archive</a>
+  </div>
+  <div class="user-info">
+    <img src="https://via.placeholder.com/40" alt="Admin">
+    <span>Admin</span>
+  </div>
+</div>
+
+<!-- Archive Container -->
+<div class="container">
+  <h2>Archived Orders</h2>
+  <table>
+    <thead>
+    <tr>
+      <th class="sortable" onclick="sortTable('name')">Order Name</th>
+      <th class="sortable" onclick="sortTable('date')">Date</th>
+      <th class="sortable" onclick="sortTable('time')">Time</th>
+      <th class="sortable" onclick="sortTable('total')">Total</th>
+      <th>Action</th>
+    </tr>
+    </thead>
+    <tbody id="archiveTableBody">
+    <!-- Orderlar jadval satrlari shu yerga qo'shiladi -->
+    </tbody>
+  </table>
+</div>
+
+<!-- Modal for Order Details -->
+<div class="modal" id="orderModal">
+  <div class="modal-content">
+    <button class="close-btn" onclick="closeModal()">×</button>
+    <h3>Order Details</h3>
+    <div class="detail-item"><strong>Order:</strong> <span id="modalOrderName"></span></div>
+    <div class="detail-item"><strong>Date:</strong> <span id="modalDate"></span></div>
+    <div class="detail-item"><strong>Time:</strong> <span id="modalTime"></span></div>
+    <div class="detail-item"><strong>Products:</strong> <span id="modalProducts"></span></div>
+    <div class="detail-item"><strong>Total:</strong> <span id="modalTotal"></span></div>
+    <div class="detail-item"><strong>Status:</strong> <span id="modalStatus"></span></div>
+  </div>
+</div>
+
+<script>
+  // Mock ma'lumot: archived orders with date and time details (format: "YYYY-MM-DD HH:mm")
+  const orders = [
+    { id: 1, name: 'Order #1', status: 'archived', createdAt: '2025-02-06 10:30', products: [{ name: 'Product A', quantity: 1, price: 5000 }], total: 5000 },
+    { id: 2, name: 'Order #2', status: 'archived', createdAt: '2025-02-07 15:45', products: [{ name: 'Product B', quantity: 2, price: 7500 }], total: 15000 },
+    { id: 3, name: 'Order #3', status: 'archived', createdAt: '2025-02-08 09:15', products: [{ name: 'Product C', quantity: 3, price: 12000 }], total: 36000 },
+    { id: 4, name: 'Order #4', status: 'archived', createdAt: '2025-02-09 11:00', products: [{ name: 'Product D', quantity: 4, price: 6500 }], total: 26000 },
+    { id: 5, name: 'Order #5', status: 'archived', createdAt: '2025-02-10 14:20', products: [{ name: 'Product E', quantity: 5, price: 9000 }], total: 45000 },
+    { id: 6, name: 'Order #6', status: 'archived', createdAt: '2025-02-11 16:50', products: [{ name: 'Product A', quantity: 2, price: 5000 }], total: 10000 },
+    { id: 7, name: 'Order #7', status: 'archived', createdAt: '2025-02-12 08:30', products: [{ name: 'Product B', quantity: 3, price: 7500 }], total: 22500 },
+    { id: 8, name: 'Order #8', status: 'archived', createdAt: '2025-02-13 12:15', products: [{ name: 'Product C', quantity: 4, price: 12000 }], total: 48000 },
+    { id: 9, name: 'Order #9', status: 'archived', createdAt: '2025-02-14 09:45', products: [{ name: 'Product D', quantity: 1, price: 6500 }], total: 6500 },
+    { id: 10, name: 'Order #10', status: 'archived', createdAt: '2025-02-15 10:00', products: [{ name: 'Product E', quantity: 2, price: 9000 }], total: 18000 },
+    { id: 11, name: 'Order #11', status: 'archived', createdAt: '2025-02-16 13:30', products: [{ name: 'Product A', quantity: 3, price: 5000 }], total: 15000 },
+    { id: 12, name: 'Order #12', status: 'archived', createdAt: '2025-02-17 17:15', products: [{ name: 'Product B', quantity: 4, price: 7500 }], total: 30000 },
+    { id: 13, name: 'Order #13', status: 'archived', createdAt: '2025-02-18 11:45', products: [{ name: 'Product C', quantity: 5, price: 12000 }], total: 60000 },
+    { id: 14, name: 'Order #14', status: 'archived', createdAt: '2025-02-19 14:10', products: [{ name: 'Product D', quantity: 1, price: 6500 }], total: 6500 },
+    { id: 15, name: 'Order #15', status: 'archived', createdAt: '2025-02-20 09:20', products: [{ name: 'Product E', quantity: 2, price: 9000 }], total: 18000 },
+    { id: 16, name: 'Order #16', status: 'archived', createdAt: '2025-02-21 16:00', products: [{ name: 'Product A', quantity: 3, price: 5000 }], total: 15000 },
+    { id: 17, name: 'Order #17', status: 'archived', createdAt: '2025-02-22 10:40', products: [{ name: 'Product B', quantity: 4, price: 7500 }], total: 30000 },
+    { id: 18, name: 'Order #18', status: 'archived', createdAt: '2025-02-23 15:30', products: [{ name: 'Product C', quantity: 5, price: 12000 }], total: 60000 },
+    { id: 19, name: 'Order #19', status: 'archived', createdAt: '2025-02-24 08:50', products: [{ name: 'Product D', quantity: 2, price: 6500 }], total: 13000 },
+    { id: 20, name: 'Order #20', status: 'archived', createdAt: '2025-02-25 12:00', products: [{ name: 'Product E', quantity: 3, price: 9000 }], total: 27000 },
+    { id: 21, name: 'Order #21', status: 'archived', createdAt: '2025-02-26 10:10', products: [{ name: 'Product A', quantity: 4, price: 5000 }], total: 20000 },
+    { id: 22, name: 'Order #22', status: 'archived', createdAt: '2025-02-27 11:30', products: [{ name: 'Product B', quantity: 1, price: 7500 }], total: 7500 },
+    { id: 23, name: 'Order #23', status: 'archived', createdAt: '2025-02-28 09:00', products: [{ name: 'Product C', quantity: 2, price: 12000 }], total: 24000 },
+    { id: 24, name: 'Order #24', status: 'archived', createdAt: '2025-03-01 10:15', products: [{ name: 'Product D', quantity: 3, price: 6500 }], total: 19500 },
+    { id: 25, name: 'Order #25', status: 'archived', createdAt: '2025-03-02 14:25', products: [{ name: 'Product E', quantity: 4, price: 9000 }], total: 36000 },
+    { id: 26, name: 'Order #26', status: 'archived', createdAt: '2025-03-03 09:35', products: [{ name: 'Product A', quantity: 5, price: 5000 }], total: 25000 },
+    { id: 27, name: 'Order #27', status: 'archived', createdAt: '2025-03-04 11:45', products: [{ name: 'Product B', quantity: 2, price: 7500 }], total: 15000 },
+    { id: 28, name: 'Order #28', status: 'archived', createdAt: '2025-03-05 16:05', products: [{ name: 'Product C', quantity: 3, price: 12000 }], total: 36000 },
+    { id: 29, name: 'Order #29', status: 'archived', createdAt: '2025-03-06 08:55', products: [{ name: 'Product D', quantity: 4, price: 6500 }], total: 26000 },
+    { id: 30, name: 'Order #30', status: 'archived', createdAt: '2025-03-07 12:20', products: [{ name: 'Product E', quantity: 1, price: 9000 }], total: 9000 },
+    { id: 31, name: 'Order #31', status: 'archived', createdAt: '2025-03-08 10:40', products: [{ name: 'Product A', quantity: 2, price: 5000 }], total: 10000 },
+    { id: 32, name: 'Order #32', status: 'archived', createdAt: '2025-03-09 15:00', products: [{ name: 'Product B', quantity: 3, price: 7500 }], total: 22500 },
+    { id: 33, name: 'Order #33', status: 'archived', createdAt: '2025-03-10 09:15', products: [{ name: 'Product C', quantity: 4, price: 12000 }], total: 48000 },
+    { id: 34, name: 'Order #34', status: 'archived', createdAt: '2025-03-11 11:30', products: [{ name: 'Product D', quantity: 5, price: 6500 }], total: 32500 },
+    { id: 35, name: 'Order #35', status: 'archived', createdAt: '2025-03-12 14:45', products: [{ name: 'Product E', quantity: 2, price: 9000 }], total: 18000 },
+    { id: 36, name: 'Order #36', status: 'archived', createdAt: '2025-03-13 10:20', products: [{ name: 'Product A', quantity: 3, price: 5000 }], total: 15000 },
+    { id: 37, name: 'Order #37', status: 'archived', createdAt: '2025-03-14 13:00', products: [{ name: 'Product B', quantity: 4, price: 7500 }], total: 30000 },
+    { id: 38, name: 'Order #38', status: 'archived', createdAt: '2025-03-15 09:50', products: [{ name: 'Product C', quantity: 5, price: 12000 }], total: 60000 },
+    { id: 39, name: 'Order #39', status: 'archived', createdAt: '2025-03-16 16:10', products: [{ name: 'Product D', quantity: 1, price: 6500 }], total: 6500 },
+    { id: 40, name: 'Order #40', status: 'archived', createdAt: '2025-03-17 11:00', products: [{ name: 'Product E', quantity: 2, price: 9000 }], total: 18000 }
+  ];
+
+
+  // Global sort state
+  let currentSortColumn = 'createdAt'; // default: sort by createdAt (full timestamp)
+  let currentSortOrder = 1; // 1 for ascending, -1 for descending
+
+  // Sortlash funksiyasi: sortTable(column) deb chaqiriladi
+  function sortTable(column) {
+    // Agar oldingi ustun bilan bir xil bo'lsa, sort order-ni toggle qilamiz
+    if (currentSortColumn === column) {
+      currentSortOrder *= -1;
+    } else {
+      currentSortColumn = column;
+      currentSortOrder = 1;
+    }
+    renderArchiveTable();
+  }
+
+  // Jadvalni render qilish: har bir orderni kerakli ustun bo'yicha sortlab chiqaramiz
+  function renderArchiveTable() {
+    // Filter: faqat archived orderlar
+    const filteredOrders = orders.filter(order => order.status === 'archived');
+    // Sortlash: currentSortColumn ga qarab
+    const sortedOrders = filteredOrders.sort((a, b) => {
+      if (currentSortColumn === 'name') {
+        return currentSortOrder * a.name.localeCompare(b.name);
+      } else if (currentSortColumn === 'total') {
+        return currentSortOrder * (a.total - b.total);
+      } else if (currentSortColumn === 'date') {
+        // Sana qismi: createdAt ning birinchi qismi
+        const dateA = a.createdAt.split(' ')[0];
+        const dateB = b.createdAt.split(' ')[0];
+        return currentSortOrder * dateA.localeCompare(dateB);
+      } else if (currentSortColumn === 'time') {
+        // Vaqt qismi: createdAt ning ikkinchi qismi
+        const timeA = a.createdAt.split(' ')[1];
+        const timeB = b.createdAt.split(' ')[1];
+        return currentSortOrder * timeA.localeCompare(timeB);
+      } else {
+        // Default: to'liq timestamp bo'yicha sortlash
+        return currentSortOrder * (new Date(a.createdAt) - new Date(b.createdAt));
+      }
+    });
+
+    const tbody = document.getElementById('archiveTableBody');
+    tbody.innerHTML = '';
+
+    sortedOrders.forEach(order => {
+      const [datePart, timePart] = order.createdAt.split(' ');
+      const row = document.createElement('tr');
+      row.innerHTML = `
+          <td>${order.name}</td>
+          <td>${datePart}</td>
+          <td>${timePart}</td>
+          <td>${order.total} sum</td>
+          <td><button class="action-btn" onclick="showOrderDetails(${order.id})">View</button></td>
+        `;
+      tbody.appendChild(row);
+    });
+  }
+
+  // Modal oynada order tafsilotlarini ko'rsatish
+  function showOrderDetails(orderId) {
+    const order = orders.find(o => o.id === orderId);
+    if(order) {
+      const [datePart, timePart] = order.createdAt.split(' ');
+      document.getElementById('modalOrderName').innerText = order.name;
+      document.getElementById('modalDate').innerText = datePart;
+      document.getElementById('modalTime').innerText = timePart;
+      document.getElementById('modalProducts').innerText = order.products
+              .map(p => `${p.name} x ${p.quantity} -> ${p.quantity * p.price} sum`)
+              .join(', ');
+      document.getElementById('modalTotal').innerText = `${order.total} sum`;
+      document.getElementById('modalStatus').innerText = order.status;
+      document.getElementById('orderModal').style.display = 'flex';
+    }
+  }
+
+  function closeModal() {
+    document.getElementById('orderModal').style.display = 'none';
+  }
+
+  document.addEventListener('DOMContentLoaded', renderArchiveTable);
+</script>
+</body>
+</html>
+
+
+<!--
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Archived Orders - Table View</title>
+  <style>
+    /* Umumiy reset va asosiy stil */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f4f4f9;
+      color: #333;
+    }
+    /* Header */
+    .header {
+      width: 100%;
+      background-color: #4CAF50;
+      color: white;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 20px 40px;
+      border-radius: 0 0 8px 8px;
+      margin-bottom: 30px;
+    }
+    .header .links a {
+      color: white;
+      text-decoration: none;
+      margin-right: 20px;
+      font-size: 18px;
+    }
+    .header .user-info {
+      display: flex;
+      align-items: center;
+    }
+    .header .user-info img {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      margin-right: 10px;
+    }
+    /* Container */
+    .container {
+      padding: 0 40px;
+    }
+    h2 {
+      margin-bottom: 20px;
+    }
+    /* Jadval stilizatsiyasi */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background-color: #fff;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    thead {
+      background-color: #4CAF50;
+      color: white;
+    }
+    th, td {
+      padding: 12px 15px;
+      text-align: left;
+      border-bottom: 1px solid #ddd;
+    }
+    tbody tr:hover {
+      background-color: #f9f9f9;
+      cursor: pointer;
+    }
+    .action-btn {
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      padding: 6px 12px;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    .action-btn:hover {
+      background-color: #45a049;
+    }
+    /* Modal styles */
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0,0,0,0.5);
+      justify-content: center;
+      align-items: center;
+    }
+    .modal-content {
+      background-color: #fff;
+      padding: 20px;
+      border-radius: 8px;
+      width: 400px;
+      position: relative;
+      box-shadow: 0 0 15px rgba(0,0,0,0.2);
+    }
+    .close-btn {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      font-size: 20px;
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: #555;
+    }
+    .close-btn:hover {
+      color: #ff0000;
+    }
+    .detail-item {
+      margin-bottom: 10px;
+      font-size: 14px;
+    }
+  </style>
+</head>
+<body>
+&lt;!&ndash; Header &ndash;&gt;
+<div class="header">
+  <div class="links">
+    <a href="#">Admin Page</a>
+    <a href="#">Orders</a>
+    <a href="#">Archive</a>
+  </div>
+  <div class="user-info">
+    <img src="https://via.placeholder.com/40" alt="Admin">
+    <span>Admin</span>
+  </div>
+</div>
+
+&lt;!&ndash; Archive Container &ndash;&gt;
+<div class="container">
+  <h2>Archived Orders</h2>
+  <table>
+    <thead>
+    <tr>
+      <th>Order Name</th>
+      <th>Date</th>
+      <th>Time</th>
+      <th>Total</th>
+      <th>Action</th>
+    </tr>
+    </thead>
+    <tbody id="archiveTableBody">
+    &lt;!&ndash; Orderlar jadval satrlari shu yerga qo'shiladi &ndash;&gt;
+    </tbody>
+  </table>
+</div>
+
+&lt;!&ndash; Modal for Order Details &ndash;&gt;
+<div class="modal" id="orderModal">
+  <div class="modal-content">
+    <button class="close-btn" onclick="closeModal()">×</button>
+    <h3>Order Details</h3>
+    <div class="detail-item"><strong>Order:</strong> <span id="modalOrderName"></span></div>
+    <div class="detail-item"><strong>Date:</strong> <span id="modalDate"></span></div>
+    <div class="detail-item"><strong>Time:</strong> <span id="modalTime"></span></div>
+    <div class="detail-item"><strong>Products:</strong> <span id="modalProducts"></span></div>
+    <div class="detail-item"><strong>Total:</strong> <span id="modalTotal"></span></div>
+    <div class="detail-item"><strong>Status:</strong> <span id="modalStatus"></span></div>
+  </div>
+</div>
+
+<script>
+  // Mock ma'lumot: archived orders with date and time details (format: "YYYY-MM-DD HH:mm")
+  const orders = [
+    { id: 1, name: 'Order #1', status: 'archived', createdAt: '2025-02-06 10:30', products: [{ name: 'Product A', quantity: 4, price: 5000 }], total: 20000 },
+    { id: 2, name: 'Order #2', status: 'archived', createdAt: '2025-02-07 15:45', products: [{ name: 'Product B', quantity: 2, price: 7500 }], total: 15000 },
+    { id: 3, name: 'Order #3', status: 'archived', createdAt: '2025-02-08 09:15', products: [{ name: 'Product C', quantity: 1, price: 12000 }], total: 12000 }
+    // Qo'shimcha archived orderlarni shu yerga qo'shishingiz mumkin
+  ];
+
+  // Jadvalni yaratilgan vaqt (soat va minut) bo'yicha sortlab render qilish
+  function renderArchiveTable() {
+    const sortedOrders = orders
+            .filter(order => order.status === 'archived')
+            .sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt)); // vaqt bo'yicha sort (ascending)
+
+    const tbody = document.getElementById('archiveTableBody');
+    tbody.innerHTML = '';
+
+    sortedOrders.forEach(order => {
+      // createdAt dan sana va vaqtni ajratib olamiz:
+      const [datePart, timePart] = order.createdAt.split(' ');
+      const row = document.createElement('tr');
+      row.innerHTML = `
+          <td>${order.name}</td>
+          <td>${datePart}</td>
+          <td>${timePart}</td>
+          <td>${order.total} sum</td>
+          <td><button class="action-btn" onclick="showOrderDetails(${order.id})">View</button></td>
+        `;
+      tbody.appendChild(row);
+    });
+  }
+
+  // Modal oynada order tafsilotlarini ko'rsatish
+  function showOrderDetails(orderId) {
+    const order = orders.find(o => o.id === orderId);
+    if(order) {
+      const [datePart, timePart] = order.createdAt.split(' ');
+      document.getElementById('modalOrderName').innerText = order.name;
+      document.getElementById('modalDate').innerText = datePart;
+      document.getElementById('modalTime').innerText = timePart;
+      document.getElementById('modalProducts').innerText = order.products
+              .map(p => `${p.name} x ${p.quantity} -> ${p.quantity * p.price} sum`)
+              .join(', ');
+      document.getElementById('modalTotal').innerText = `${order.total} sum`;
+      document.getElementById('modalStatus').innerText = order.status;
+      document.getElementById('orderModal').style.display = 'flex';
+    }
+  }
+
+  function closeModal() {
+    document.getElementById('orderModal').style.display = 'none';
+  }
+
+  document.addEventListener('DOMContentLoaded', renderArchiveTable);
+</script>
+</body>
+</html>
+-->

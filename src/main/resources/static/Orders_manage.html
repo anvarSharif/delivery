@@ -1,0 +1,698 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Order Boshqarish - Trello Style</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f9;
+            display: flex;
+            justify-content: flex-start;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+        }
+
+        /* Header styling */
+        .header {
+            width: 100%;
+            background-color: #4CAF50;
+            color: white;
+            display: flex;
+            justify-content: space-between;
+            padding: 20px 40px;
+            align-items: center;
+            border-radius: 8px;
+            margin-bottom: 40px;
+        }
+
+        .header .links a {
+            color: white;
+            text-decoration: none;
+            margin-right: 20px;
+            font-size: 18px;
+        }
+
+        .header .user-info {
+            display: flex;
+            align-items: center;
+        }
+
+        .header .user-info img {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            margin-right: 10px;
+        }
+
+        /* Kolonkalarga styling */
+        .columns-container {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+
+        .column {
+            width: 250px;
+            min-height: 400px;
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            margin: 10px;
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            overflow-y: auto;
+        }
+
+        .column h3 {
+            font-size: 18px;
+            color: #333;
+            text-align: center;
+            margin-bottom: 10px;
+            text-transform: capitalize;
+        }
+
+        .order {
+            width: 100%;
+            background-color: #f9f9f9;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            cursor: pointer;
+            user-select: none;
+            transition: background-color 0.2s;
+        }
+
+        .order:hover {
+            background-color: #e0e0e0;
+        }
+
+        .order .status {
+            font-size: 14px;
+            color: #555;
+            margin-top: 8px;
+            font-weight: bold;
+        }
+
+        .column-placeholder {
+            height: 50px;
+            border: 1px dashed #ccc;
+            margin: 5px 0;
+        }
+
+        /* Modal styling */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            width: 400px;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+            position: relative;
+        }
+
+        .modal-content h3 {
+            margin-bottom: 20px;
+        }
+
+        .modal-content .order-details {
+            margin-bottom: 20px;
+        }
+
+        .modal-content .close-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            font-size: 20px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: #555;
+        }
+
+        .modal-content .close-btn:hover {
+            color: #ff0000;
+        }
+
+        .modal-content .detail-item {
+            margin-bottom: 8px;
+        }
+
+        .order .product-list {
+            font-size: 14px;
+            color: #555;
+            margin-top: 8px;
+        }
+
+        .order .product-list span {
+            font-weight: bold;
+        }
+
+    </style>
+</head>
+<body>
+
+<!-- Header -->
+<div class="header">
+    <div class="links">
+        <a href="#">Admin Page</a>
+        <a href="#">Orders</a>
+    </div>
+    <div class="user-info">
+        <img src="https://via.placeholder.com/40" alt="Admin">
+        <span>Admin</span>
+    </div>
+</div>
+
+<!-- Orderlar uchun status kolonkalar -->
+<div class="columns-container">
+    <div class="column" id="new-column" ondrop="drop(event)" ondragover="allowDrop(event)">
+        <h3>New</h3>
+    </div>
+    <div class="column" id="in-progress-column" ondrop="drop(event)" ondragover="allowDrop(event)">
+        <h3>In-progress</h3>
+    </div>
+    <div class="column" id="delivery-column" ondrop="drop(event)" ondragover="allowDrop(event)">
+        <h3>Delivery</h3>
+    </div>
+    <div class="column" id="delivered-column" ondrop="drop(event)" ondragover="allowDrop(event)">
+        <h3>Delivered</h3>
+    </div>
+</div>
+
+<!-- Modal for showing order details -->
+<div class="modal" id="orderModal">
+    <div class="modal-content">
+        <button class="close-btn" onclick="closeModal()">×</button>
+        <h3>Order Details</h3>
+        <div class="order-details">
+            <div class="detail-item"><strong>Status:</strong> <span id="modal-status"></span></div>
+            <div class="detail-item"><strong>Created At:</strong> <span id="modal-created-at"></span></div>
+            <div class="detail-item"><strong>Products:</strong> <span id="modal-products"></span></div>
+            <div class="detail-item"><strong>Total Price:</strong> <span id="modal-total"></span></div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+<script src="js/request.js"></script>
+<script>
+let orders=[];
+    request({
+        url:"/operator/order",
+        method:"get"
+    }).then(res=>{
+        orders=res.data();
+    })
+    // Mock orderlar ma'lumotlari
+    /* [
+        { id: 1, status: 'new', name: 'Order #1', createdAt: '2025-02-01', products: [{ name: 'Product A', quantity: 4, price: 5000 }], total: 20000 },
+        { id: 2, status: 'new', name: 'Order #2', createdAt: '2025-02-02', products: [{ name: 'Product B', quantity: 3, price: 7000 }], total: 21000 },
+        { id: 3, status: 'in-progress', name: 'Order #3', createdAt: '2025-02-03', products: [{ name: 'Product C', quantity: 5, price: 4000 }], total: 20000 },
+        { id: 7, status: 'in-progress', name: 'Order #3', createdAt: '2025-02-03', products: [{ name: 'Product C', quantity: 5, price: 4000 },{ name: 'Product ab', quantity: 5, price: 4000 },{ name: 'Product at', quantity: 3, price: 41000 }], total: 20000 },
+        { id: 4, status: 'delivery', name: 'Order #4', createdAt: '2025-02-04', products: [{ name: 'Product D', quantity: 2, price: 10000 }], total: 20000 },
+        { id: 5, status: 'delivered', name: 'Order #5', createdAt: '2025-02-05', products: [{ name: 'Product E', quantity: 10, price: 3000 }], total: 30000 },
+        { id: 6, status: 'archived', name: 'Order #6', createdAt: '2025-02-06', products: [{ name: 'Product F', quantity: 6, price: 15000 }], total: 90000 },
+    ];*/
+
+    // Initial render of orders
+    function renderOrders() {
+        orders.forEach(order => {
+            const orderElement = createOrderElement(order);
+            const column = document.getElementById(order.status + '-column');
+            column.appendChild(orderElement);
+        });
+    }
+
+    // Order elementini yaratish
+    function createOrderElement(order) {
+        const orderElement = document.createElement('div');
+        orderElement.classList.add('order');
+        orderElement.id = `order-${order.id}`;
+        orderElement.setAttribute('draggable', 'true');
+        orderElement.setAttribute('ondragstart', `drag(event, ${order.id})`);
+        orderElement.setAttribute('onclick', `showOrderDetails(${order.id})`);
+        orderElement.innerHTML = `
+        ${order.name}
+        <div class="product-list">
+          ${order.products.map(product => `${product.name} x ${product.quantity} => ${product.price * product.quantity} sum`).join('<br>')}
+        </div>
+        <div class="status">${order.status}</div>
+      `;
+        return orderElement;
+    }
+
+    // Order haqida ma'lumotlarni ko'rsatish
+    function showOrderDetails(orderId) {
+        const order = orders.find(o => o.id === orderId);
+        document.getElementById('modal-status').innerText = order.status;
+        document.getElementById('modal-created-at').innerText = order.createdAt;
+        document.getElementById('modal-products').innerText = order.products.map(product => `${product.name} x ${product.quantity} => ${product.price}`).join(',\n ');
+        document.getElementById('modal-total').innerText = `${order.total} sum`;
+        document.getElementById('orderModal').style.display = 'flex';
+    }
+
+    // Modalni yopish
+    function closeModal() {
+        document.getElementById('orderModal').style.display = 'none';
+    }
+
+    // Drag and drop event functions
+    function allowDrop(event) {
+        event.preventDefault();
+    }
+
+    function drag(event, orderId) {
+        event.dataTransfer.setData("orderId", orderId);
+    }
+
+    function drop(event) {
+        event.preventDefault();
+        const orderId = event.dataTransfer.getData("orderId");
+        const order = orders.find(o => o.id == orderId);
+        const newStatus = event.target.id.replace('-column', '');
+        if (order.status !== newStatus) {
+            order.status = newStatus;
+            renderOrders();
+        }
+    }
+
+    // Initial rendering
+    renderOrders();
+</script>
+
+</body>
+</html>
+
+<!--
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Order Boshqarish - Trello Style</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f9;
+            display: flex;
+            justify-content: flex-start;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+        }
+
+        /* Header styling */
+        .header {
+            width: 100%;
+            background-color: #4CAF50;
+            color: white;
+            display: flex;
+            justify-content: space-between;
+            padding: 20px 40px;
+            align-items: center;
+            border-radius: 8px;
+            margin-bottom: 40px;
+        }
+
+        .header .links a {
+            color: white;
+            text-decoration: none;
+            margin-right: 20px;
+            font-size: 18px;
+        }
+
+        .header .user-info {
+            display: flex;
+            align-items: center;
+        }
+
+        .header .user-info img {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            margin-right: 10px;
+        }
+
+        /* Kolonkalarga styling */
+        .columns-container {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+
+        .column {
+            width: 250px;
+            min-height: 400px;
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            margin: 10px;
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            overflow-y: auto;
+        }
+
+        .column h3 {
+            font-size: 18px;
+            color: #333;
+            text-align: center;
+            margin-bottom: 10px;
+            text-transform: capitalize;
+        }
+
+        .order {
+            width: 100%;
+            background-color: #f9f9f9;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            cursor: move;
+            user-select: none;
+            transition: background-color 0.2s;
+        }
+
+        .order:hover {
+            background-color: #e0e0e0;
+        }
+
+        .order .status {
+            font-size: 14px;
+            color: #555;
+            margin-top: 8px;
+            font-weight: bold;
+        }
+
+        .column-placeholder {
+            height: 50px;
+            border: 1px dashed #ccc;
+            margin: 5px 0;
+        }
+    </style>
+</head>
+<body>
+
+&lt;!&ndash; Header &ndash;&gt;
+<div class="header">
+    <div class="links">
+        <a href="#">Admin Page</a>
+        <a href="#">Orders</a>
+    </div>
+    <div class="user-info">
+        <img src="https://via.placeholder.com/40" alt="Admin">
+        <span>Admin</span>
+    </div>
+</div>
+
+&lt;!&ndash; Orderlar uchun status kolonkalar &ndash;&gt;
+<div class="columns-container">
+    <div class="column" id="new-column" ondrop="drop(event)" ondragover="allowDrop(event)">
+        <h3>Yangi Yaralgan</h3>
+        &lt;!&ndash; Orderlar here &ndash;&gt;
+    </div>
+    <div class="column" id="in-progress-column" ondrop="drop(event)" ondragover="allowDrop(event)">
+        <h3>Jartayonda</h3>
+        &lt;!&ndash; Orderlar here &ndash;&gt;
+    </div>
+    <div class="column" id="delivery-column" ondrop="drop(event)" ondragover="allowDrop(event)">
+        <h3>Yetkazib Berilyapti</h3>
+        &lt;!&ndash; Orderlar here &ndash;&gt;
+    </div>
+    <div class="column" id="delivered-column" ondrop="drop(event)" ondragover="allowDrop(event)">
+        <h3>Mijozga Yetkazib Berildi</h3>
+        &lt;!&ndash; Orderlar here &ndash;&gt;
+    </div>
+    <div class="column" id="archived-column" ondrop="drop(event)" ondragover="allowDrop(event)">
+        <h3>Arxiv</h3>
+        &lt;!&ndash; Orderlar here &ndash;&gt;
+    </div>
+</div>
+
+<script>
+    // Mock orderlar ma'lumotlari
+    const orders = [
+        { id: 1, status: 'new', name: 'Order #1' },
+        { id: 2, status: 'new', name: 'Order #2' },
+        { id: 3, status: 'in-progress', name: 'Order #3' },
+        { id: 4, status: 'delivery', name: 'Order #4' },
+        { id: 5, status: 'delivered', name: 'Order #5' },
+        { id: 6, status: 'archived', name: 'Order #6' },
+    ];
+
+    // Initial render of orders
+    function renderOrders() {
+        orders.forEach(order => {
+            const orderElement = createOrderElement(order);
+            const column = document.getElementById(order.status + '-column');
+            column.appendChild(orderElement);
+        });
+    }
+
+    // Order elementini yaratish
+    function createOrderElement(order) {
+        const orderElement = document.createElement('div');
+        orderElement.classList.add('order');
+        orderElement.id = `order-${order.id}`;
+        orderElement.setAttribute('draggable', 'true');
+        orderElement.setAttribute('ondragstart', `drag(event, ${order.id})`);
+        orderElement.innerHTML = `
+        ${order.name}
+        <div class="status">${order.status}</div>
+      `;
+        return orderElement;
+    }
+
+    // Drag and drop helper functions
+    function allowDrop(event) {
+        event.preventDefault();
+    }
+
+    function drag(event, orderId) {
+        event.dataTransfer.setData('orderId', orderId);
+    }
+
+    function drop(event) {
+        event.preventDefault();
+        const orderId = event.dataTransfer.getData('orderId');
+        const order = orders.find(o => o.id == orderId);
+        const newColumn = event.target;
+
+        // Agar dropning targeti kolonkani emas bo'lsa, saqlash
+        if (!newColumn.classList.contains('column')) {
+            return;
+        }
+
+        // Orderni yangi kolonkaga qo'yish
+        newColumn.appendChild(document.getElementById(`order-${order.id}`));
+
+        // Orderning statusini yangilash
+        order.status = newColumn.id.split('-')[0];
+    }
+
+    // Initial rendering
+    renderOrders();
+</script>
+
+</body>
+</html>
+-->
+
+
+<!--
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Order Boshqarish - Trello Style</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f9;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            height: 100vh;
+            margin: 0;
+            flex-wrap: wrap;
+            padding: 20px;
+        }
+
+        .column {
+            width: 250px;
+            min-height: 400px;
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            margin: 10px;
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            overflow-y: auto;
+        }
+
+        .column h3 {
+            font-size: 18px;
+            color: #333;
+            text-align: center;
+            margin-bottom: 10px;
+        }
+
+        .order {
+            width: 100%;
+            background-color: #f9f9f9;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            cursor: move;
+            user-select: none;
+            transition: background-color 0.2s;
+        }
+
+        .order:hover {
+            background-color: #e0e0e0;
+        }
+
+        .column-placeholder {
+            height: 50px;
+            border: 1px dashed #ccc;
+            margin: 5px 0;
+        }
+    </style>
+</head>
+<body>
+
+&lt;!&ndash; Statuslar (columnlar) &ndash;&gt;
+<div class="column" id="new-column" ondrop="drop(event)" ondragover="allowDrop(event)">
+    <h3>Yangi Yaralgan</h3>
+    &lt;!&ndash; Orderlar here &ndash;&gt;
+</div>
+<div class="column" id="in-progress-column" ondrop="drop(event)" ondragover="allowDrop(event)">
+    <h3>Jartayonda</h3>
+    &lt;!&ndash; Orderlar here &ndash;&gt;
+</div>
+<div class="column" id="delivery-column" ondrop="drop(event)" ondragover="allowDrop(event)">
+    <h3>Yetkazib Berilyapti</h3>
+    &lt;!&ndash; Orderlar here &ndash;&gt;
+</div>
+<div class="column" id="delivered-column" ondrop="drop(event)" ondragover="allowDrop(event)">
+    <h3>Mijozga Yetkazib Berildi</h3>
+    &lt;!&ndash; Orderlar here &ndash;&gt;
+</div>
+<div class="column" id="archived-column" ondrop="drop(event)" ondragover="allowDrop(event)">
+    <h3>Arxiv</h3>
+    &lt;!&ndash; Orderlar here &ndash;&gt;
+</div>
+
+<script>
+    // Mock orderlar ma'lumotlari
+    const orders = [
+        { id: 1, status: 'new', name: 'Order #1' },
+        { id: 2, status: 'new', name: 'Order #2' },
+        { id: 3, status: 'in-progress', name: 'Order #3' },
+        { id: 4, status: 'delivery', name: 'Order #4' },
+        { id: 5, status: 'delivered', name: 'Order #5' },
+        { id: 6, status: 'archived', name: 'Order #6' },
+    ];
+
+    // Initial render of orders
+    function renderOrders() {
+        orders.forEach(order => {
+            const orderElement = createOrderElement(order);
+            const column = document.getElementById(order.status + '-column');
+            column.appendChild(orderElement);
+        });
+    }
+
+    // Order elementini yaratish
+    function createOrderElement(order) {
+        const orderElement = document.createElement('div');
+        orderElement.classList.add('order');
+        orderElement.id = `order-${order.id}`;
+        orderElement.setAttribute('draggable', 'true');
+        orderElement.setAttribute('ondragstart', `drag(event, ${order.id})`);
+        orderElement.innerText = order.name;
+        return orderElement;
+    }
+
+    // Drag and drop helper functions
+    function allowDrop(event) {
+        event.preventDefault();
+    }
+
+    function drag(event, orderId) {
+        event.dataTransfer.setData('orderId', orderId);
+    }
+
+    function drop(event) {
+        event.preventDefault();
+        const orderId = event.dataTransfer.getData('orderId');
+        const order = orders.find(o => o.id == orderId);
+        const newColumn = event.target;
+
+        // Agar dropning targeti kolonkani emas bo'lsa, saqlash
+        if (!newColumn.classList.contains('column')) {
+            return;
+        }
+
+        // Orderni yangi kolonkaga qo'yish
+        newColumn.appendChild(document.getElementById(`order-${order.id}`));
+
+        // Orderning statusini yangilash
+        order.status = newColumn.id.split('-')[0];
+    }
+
+    // Initial rendering
+    renderOrders();
+</script>
+
+</body>
+</html>
+
+-->

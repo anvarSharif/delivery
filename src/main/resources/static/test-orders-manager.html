@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Order Management</title>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f4f4f4;
+            margin: 0;
+            padding: 20px;
+        }
+        .board {
+            display: flex;
+            gap: 15px;
+        }
+        .column {
+            width: 200px;
+            background: white;
+            padding: 10px;
+            border-radius: 5px;
+            box-shadow: 0px 0px 5px rgba(0, 0, 0, 0.1);
+        }
+        .order {
+            background: #fff;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+            cursor: grab;
+            border: 1px solid #ddd;
+        }
+        .order:hover {
+            background: #f9f9f9;
+        }
+        .order button {
+            float: right;
+            cursor: pointer;
+        }
+        .order-details {
+            display: none;
+            background: #eee;
+            padding: 10px;
+            border-radius: 5px;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+<div class="board">
+    <div class="column" id="New" ondrop="drop(event)" ondragover="allowDrop(event)">
+        <h3>New</h3>
+    </div>
+    <div class="column" id="In-progress" ondrop="drop(event)" ondragover="allowDrop(event)">
+        <h3>In-progress</h3>
+    </div>
+    <div class="column" id="Delivery" ondrop="drop(event)" ondragover="allowDrop(event)">
+        <h3>Delivery</h3>
+    </div>
+    <div class="column" id="Delivered" ondrop="drop(event)" ondragover="allowDrop(event)">
+        <h3>Delivered</h3>
+    </div>
+</div>
+
+<script>
+    function loadOrders() {
+        axios.get('/api/orders')
+            .then(response => {
+                response.data.forEach(order => {
+                    addOrderToColumn(order);
+                });
+            });
+    }
+
+    function addOrderToColumn(order) {
+        const column = document.getElementById(order.status);
+        const orderDiv = document.createElement('div');
+        orderDiv.classList.add('order');
+        orderDiv.setAttribute('draggable', true);
+        orderDiv.setAttribute('id', `order-${order.id}`);
+        orderDiv.ondragstart = drag;
+
+        orderDiv.innerHTML = `<strong>${order.name}</strong> <br> ${order.details}
+                <button onclick="moveToNext('${order.id}', '${order.status}')">»</button>`;
+
+        orderDiv.onclick = function() {
+            alert(`Order ID: ${order.id}\nDetails: ${order.details}`);
+        };
+
+        column.appendChild(orderDiv);
+    }
+
+    function moveToNext(orderId, currentStatus) {
+        const statuses = ["New", "In-progress", "Delivery", "Delivered"];
+        let nextStatus = statuses[statuses.indexOf(currentStatus) + 1];
+        if (!nextStatus) return;
+
+        axios.put(`/api/orders/${orderId}`, { status: nextStatus })
+            .then(() => {
+                document.getElementById(`order-${orderId}`).remove();
+                addOrderToColumn({ id: orderId, name: `Order ${orderId}`, details: "Updated", status: nextStatus });
+            });
+    }
+
+    function allowDrop(event) {
+        event.preventDefault();
+    }
+
+    function drag(event) {
+        event.dataTransfer.setData("text", event.target.id);
+    }
+
+    function drop(event) {
+        event.preventDefault();
+        const orderId = event.dataTransfer.getData("text");
+        const newStatus = event.target.id;
+
+        axios.put(`/api/orders/${orderId.replace('order-', '')}`, { status: newStatus })
+            .then(() => {
+                document.getElementById(orderId).remove();
+                addOrderToColumn({ id: orderId.replace('order-', ''), name: `Order ${orderId.replace('order-', '')}`, details: "Updated", status: newStatus });
+            });
+    }
+
+    loadOrders();
+</script>
+</body>
+</html>

@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login Page</title>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background: linear-gradient(135deg, #4caf50, #2e7d32);
+            margin: 0;
+        }
+        .login-container {
+            background: white;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            width: 350px;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .header {
+            width: 100%;
+            background: #4caf50;
+            color: white;
+            padding: 15px;
+            border-radius: 8px 8px 0 0;
+            font-size: 30px;
+            font-weight: bold;
+            text-align: center;
+        }
+        input {
+            width: calc(100% - 20px);
+            margin: 12px 0;
+            padding: 12px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            font-size: 18px;
+        }
+        button {
+            width: 100%;
+            padding: 14px;
+            background: #388e3c;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 18px;
+            transition: background 0.3s, transform 0.2s;
+        }
+        button:hover {
+            background: #2e7d32;
+            transform: scale(1.05);
+        }
+        #message {
+            margin-top: 18px;
+            font-size: 16px;
+            font-weight: bold;
+        }
+        .forgot-password {
+            margin-top: 15px;
+            font-size: 16px;
+        }
+        .forgot-password a {
+            color: #388e3c;
+            text-decoration: none;
+            font-weight: bold;
+        }
+        .forgot-password a:hover {
+            text-decoration: underline;
+        }
+        .error-message {
+            color: red;
+            font-size: 16px;
+            font-weight: bold;
+            margin-bottom: 10px;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+<div class="login-container">
+    <div class="header">Login</div>
+    <span class="error-message" id="error-message">Invalid login or password!</span>
+    <input type="email" id="email" placeholder="Email" required>
+    <input type="password" id="password" placeholder="Password" required>
+    <button onclick="login()">Login</button>
+    <p id="message"></p>
+    <p class="forgot-password"><a href="#">Forgot Password?</a></p>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+<script src="js/request.js"></script>
+<script>
+    function login() {
+        const email = document.getElementById('email').value;
+        const password = document.getElementById('password').value;
+
+        axios.post("http://localhost:8080/auth/login", {
+            email,
+            password
+        }).then(res => {
+            let token= res.data.token;
+            localStorage.setItem('token', token);
+            console.log(res.data);
+            document.getElementById('error-message').style.display = 'none';
+            window.location.href="Orders_manage.html"
+        }).catch(error => {
+            console.log(error);
+            document.getElementById('error-message').style.display = 'block';
+        });
+    }
+</script>
+</body>
+</html>
+
+
+<!--
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login Page</title>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background: linear-gradient(135deg, #4caf50, #2e7d32);
+            margin: 0;
+        }
+        .login-container {
+            background: white;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            width: 350px;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .header {
+            width: 100%;
+            background: #4caf50;
+            color: white;
+            padding: 15px;
+            border-radius: 8px 8px 0 0;
+            font-size: 30px;
+            font-weight: bold;
+            text-align: center;
+        }
+        input {
+            width: calc(100% - 20px);
+            margin: 12px 0;
+            padding: 12px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            font-size: 18px;
+        }
+        button {
+            width: 100%;
+            padding: 14px;
+            background: #388e3c;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 18px;
+            transition: background 0.3s, transform 0.2s;
+        }
+        button:hover {
+            background: #2e7d32;
+            transform: scale(1.05);
+        }
+        #message {
+            margin-top: 18px;
+            font-size: 16px;
+            font-weight: bold;
+        }
+        .forgot-password {
+            margin-top: 15px;
+            font-size: 16px;
+        }
+        .forgot-password a {
+            color: #388e3c;
+            text-decoration: none;
+            font-weight: bold;
+        }
+        .forgot-password a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+<div class="login-container">
+    <div class="header">Login</div>
+    <span class="text-danger">Login yoki password xato!</span>
+
+    <input type="email" id="email" placeholder="Email" required>
+    <input type="password" id="password" placeholder="Password" required>
+    <button onclick="login()">Login</button>
+    <p id="message"></p>
+    <p class="forgot-password"><a href="#">Forgot Password?</a></p>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+<Script src="js/request.js" ></Script>
+<script>
+    function login() {
+        const email = document.getElementById('email').value;
+        const password = document.getElementById('password').value;
+
+        request({
+            url:"/login",
+            method:"post",
+            body:{
+                email:email,
+                password:password
+            }
+        }).then(res=>{
+            console.log(res.data);
+        }).catch(error=>{
+            console.log(error);
+
+        })
+
+       /* axios.post('https://loca/login', { email, password })
+            .then(response => {
+                document.getElementById('message').textContent = 'Login successful!';
+                document.getElementById('message').style.color = 'green';
+                console.log(response.data);
+            })
+            .catch(error => {
+                document.getElementById('message').textContent = 'Login failed!';
+                document.getElementById('message').style.color = 'red';
+                console.error(error);
+            });*/
+    }
+</script>
+</body>
+</html>-->

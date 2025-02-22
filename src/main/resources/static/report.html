@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Order Report</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f4f4f9;
+            margin: 0;
+            padding: 20px;
+            color: #333;
+        }
+        header {
+            background: #4CAF50;
+            color: #fff;
+            padding: 15px 20px;
+            text-align: center;
+            border-radius: 0 0 8px 8px;
+            margin-bottom: 20px;
+        }
+        .container {
+            max-width: 1100px;
+            margin: 0 auto;
+            background: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .selects {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+        .selects select {
+            padding: 8px 12px;
+            font-size: 16px;
+        }
+        .metrics {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            justify-content: space-around;
+            margin-bottom: 30px;
+        }
+        .metric {
+            flex: 1 1 200px;
+            background: #e7f5e6;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+        }
+        .metric h3 {
+            margin-bottom: 10px;
+            font-size: 20px;
+            color: #4CAF50;
+        }
+        .metric p {
+            font-size: 18px;
+            margin: 0;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        thead {
+            background: #4CAF50;
+            color: #fff;
+        }
+        th, td {
+            padding: 12px 15px;
+            border: 1px solid #ddd;
+            text-align: center;
+        }
+        tbody tr:nth-child(even) {
+            background: #f9f9f9;
+        }
+    </style>
+</head>
+<body>
+<header>
+    <h1>Order Report</h1>
+</header>
+<div class="container">
+    <!-- Selects: Year, Month, Day -->
+    <div class="selects">
+        <div>
+            <label for="yearSelect">Year:</label>
+            <select id="yearSelect" onchange="updateReport()">
+                <option value="all">All Years</option>
+                <!-- Dinamik yillar shu yerga qo'shiladi -->
+            </select>
+        </div>
+        <div>
+            <label for="monthSelect">Month:</label>
+            <select id="monthSelect" onchange="updateReport()">
+                <option value="all">All Months</option>
+                <option value="0">January</option>
+                <option value="1">February</option>
+                <option value="2">March</option>
+                <option value="3">April</option>
+                <option value="4">May</option>
+                <option value="5">June</option>
+                <option value="6">July</option>
+                <option value="7">August</option>
+                <option value="8">September</option>
+                <option value="9">October</option>
+                <option value="10">November</option>
+                <option value="11">December</option>
+            </select>
+        </div>
+        <div>
+            <label for="daySelect">Day:</label>
+            <select id="daySelect" onchange="updateReport()">
+                <option value="all">All Days</option>
+                <!-- 1 dan 31 gacha -->
+                <!-- JavaScript orqali dinamik qo'shamiz -->
+            </select>
+        </div>
+    </div>
+
+    <!-- Metrics -->
+    <div class="metrics">
+        <div class="metric">
+            <h3>Total Orders</h3>
+            <p id="totalOrders">0</p>
+        </div>
+        <div class="metric">
+            <h3>Total Order Sum</h3>
+            <p id="totalOrderSum">0 sum</p>
+        </div>
+        <div class="metric">
+            <h3>Successful Orders</h3>
+            <p id="successfulOrders">0</p>
+        </div>
+        <div class="metric">
+            <h3>Cancelled Orders</h3>
+            <p id="cancelledOrders">0</p>
+        </div>
+    </div>
+
+    <!-- Product Table -->
+    <h2>Product Sales Report</h2>
+    <table>
+        <thead>
+        <tr>
+            <th>Product Name</th>
+            <th>Sold Quantity</th>
+            <th>Total Sales</th>
+        </tr>
+        </thead>
+        <tbody id="productTableBody">
+        <!-- Mahsulotlar bo'yicha aggregatsiya natijalari shu yerga qo'shiladi -->
+        </tbody>
+    </table>
+</div>
+
+<script>
+    // Sample orders array. Har bir orderda createdAt "YYYY-MM-DD HH:mm" formatida, status "completed" yoki "cancelled".
+    const orders = [
+        { id: 1, name: 'Order #1', status: 'completed', createdAt: '2025-03-17 10:30', total: 20000, products: [{ name: 'Product A', quantity: 4, price: 5000 }] },
+        { id: 2, name: 'Order #2', status: 'cancelled', createdAt: '2025-03-17 12:45', total: 15000, products: [{ name: 'Product B', quantity: 2, price: 7500 }] },
+        { id: 3, name: 'Order #3', status: 'completed', createdAt: '2025-03-16 09:15', total: 12000, products: [{ name: 'Product C', quantity: 1, price: 12000 }] },
+        { id: 4, name: 'Order #4', status: 'completed', createdAt: '2025-03-01 11:00', total: 26000, products: [{ name: 'Product D', quantity: 4, price: 6500 }] },
+        { id: 5, name: 'Order #5', status: 'completed', createdAt: '2025-02-28 14:20', total: 45000, products: [{ name: 'Product E', quantity: 5, price: 9000 }] },
+        { id: 6, name: 'Order #6', status: 'completed', createdAt: '2025-03-17 16:50', total: 10000, products: [{ name: 'Product A', quantity: 2, price: 5000 }] },
+        { id: 7, name: 'Order #7', status: 'completed', createdAt: '2025-03-16 08:30', total: 22500, products: [{ name: 'Product B', quantity: 3, price: 7500 }] },
+        { id: 8, name: 'Order #8', status: 'completed', createdAt: '2025-03-01 12:15', total: 48000, products: [{ name: 'Product C', quantity: 4, price: 12000 }] },
+        { id: 9, name: 'Order #9', status: 'completed', createdAt: '2025-03-17 09:45', total: 6500,  products: [{ name: 'Product D', quantity: 1, price: 6500 }] },
+        { id: 10, name: 'Order #10', status: 'cancelled', createdAt: '2025-03-17 10:00', total: 18000, products: [{ name: 'Product E', quantity: 2, price: 9000 }] },
+        { id: 11, name: 'Order #11', status: 'completed', createdAt: '2025-03-17 13:30', total: 15000, products: [{ name: 'Product A', quantity: 3, price: 5000 }] },
+        { id: 12, name: 'Order #12', status: 'completed', createdAt: '2025-03-17 17:15', total: 30000, products: [{ name: 'Product B', quantity: 4, price: 7500 }] },
+        { id: 13, name: 'Order #13', status: 'completed', createdAt: '2025-03-16 11:45', total: 60000, products: [{ name: 'Product C', quantity: 5, price: 12000 }] },
+        { id: 14, name: 'Order #14', status: 'completed', createdAt: '2025-03-16 14:10', total: 6500,  products: [{ name: 'Product D', quantity: 1, price: 6500 }] },
+        { id: 15, name: 'Order #15', status: 'completed', createdAt: '2025-03-17 09:20', total: 18000, products: [{ name: 'Product E', quantity: 2, price: 9000 }] }
+        // Qo'shimcha orderlar qo'shish mumkin
+    ];
+
+    // Select elementlarini olamiz:
+    const yearSelect = document.getElementById('yearSelect');
+    const monthSelect = document.getElementById('monthSelect');
+    const daySelect = document.getElementById('daySelect');
+
+    // Yil selectini dinamik to'ldirish: orders ichidagi barcha unikal yillarni chiqaramiz.
+    function populateYearSelect() {
+        const years = new Set();
+        orders.forEach(order => {
+            const year = new Date(order.createdAt).getFullYear();
+            years.add(year);
+        });
+        // Saralash
+        const sortedYears = Array.from(years).sort();
+        sortedYears.forEach(year => {
+            const option = document.createElement('option');
+            option.value = year;
+            option.textContent = year;
+            yearSelect.appendChild(option);
+        });
+    }
+
+    // Kun selectini to'ldirish: 1 dan 31 gacha
+    function populateDaySelect() {
+        for (let i = 1; i <= 31; i++) {
+            const option = document.createElement('option');
+            option.value = i;
+            option.textContent = i;
+            daySelect.appendChild(option);
+        }
+    }
+
+    // Filtrlash funksiyasi: Tanlangan yil, oy, kun bo'yicha orderlarni ajratadi.
+    function filterOrders() {
+        const selectedYear = yearSelect.value;
+        const selectedMonth = monthSelect.value;
+        const selectedDay = daySelect.value;
+
+        return orders.filter(order => {
+            const dateObj = new Date(order.createdAt);
+            const orderYear = dateObj.getFullYear().toString();
+            const orderMonth = dateObj.getMonth().toString(); // 0-indexed
+            const orderDay = dateObj.getDate().toString();
+
+            const matchYear = (selectedYear === 'all') || (orderYear === selectedYear);
+            const matchMonth = (selectedMonth === 'all') || (orderMonth === selectedMonth);
+            const matchDay = (selectedDay === 'all') || (orderDay === selectedDay);
+            return matchYear && matchMonth && matchDay;
+        });
+    }
+
+    // Reportni yangilash: Metrikalar va mahsulotlar aggregatsiyasini hisoblash.
+    function updateReport() {
+        const filteredOrders = filterOrders();
+
+        // Metrikalar:
+        const totalOrders = filteredOrders.length;
+        const totalOrderSum = filteredOrders.reduce((sum, order) => sum + order.total, 0);
+        const successfulOrders = filteredOrders.filter(order => order.status === 'completed').length;
+        const cancelledOrders = filteredOrders.filter(order => order.status === 'cancelled').length;
+
+        document.getElementById('totalOrders').innerText = totalOrders;
+        document.getElementById('totalOrderSum').innerText = totalOrderSum + ' sum';
+        document.getElementById('successfulOrders').innerText = successfulOrders;
+        document.getElementById('cancelledOrders').innerText = cancelledOrders;
+
+        // Mahsulot aggregatsiyasi: har bir mahsulot nomi bo‘yicha sotilgan son va umumiy summa.
+        const productMap = {};
+        filteredOrders.forEach(order => {
+            order.products.forEach(prod => {
+                if (!productMap[prod.name]) {
+                    productMap[prod.name] = { name: prod.name, quantity: 0, total: 0 };
+                }
+                productMap[prod.name].quantity += prod.quantity;
+                productMap[prod.name].total += prod.quantity * prod.price;
+            });
+        });
+
+        // Natijani arrayga aylantirib, sotilgan son bo‘yicha sortlash (desc)
+        const productArray = Object.values(productMap).sort((a, b) => b.quantity - a.quantity);
+
+        // Jadvalni yangilaymiz:
+        const tbody = document.getElementById('productTableBody');
+        tbody.innerHTML = '';
+        productArray.forEach(prod => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+          <td>${prod.name}</td>
+          <td>${prod.quantity}</td>
+          <td>${prod.total} sum</td>
+        `;
+            tbody.appendChild(tr);
+        });
+    }
+
+    // Dastlabki init funksiyalari:
+    populateYearSelect();
+    populateDaySelect();
+    updateReport();
+
+    // Har bir select o'zgarishida reportni yangilash avtomatik chaqiriladi.
+</script>
+</body>
+</html>
